@@ -1,9 +1,14 @@
-# Hacemos una muestra de 500 filas de backloggd_games 
+# Cargamos la base de datos (backloggd_games)
 backloggd_games <-read.csv("backloggd_games.csv", sep=",")
-muestra <-head(backloggd_games, 500)
+videojuegos <- backloggd_games
+
+# Chequeo
+str(videojuegos)
+sum(duplicated(videojuegos))
+unique(videojuegos$Rating)
 
 # Eliminamos la columna X
-muestra <- muestra %>% select(-X)
+videojuegos <- videojuegos %>% select(-X)
 
 # Convertimos las filas de "character" a "numeric" con una funcion
 convertir_a_numeric <-
@@ -13,11 +18,12 @@ convertir_a_numeric <-
     columns <- toupper(columna)
     
     tiene_k <- grepl("K", columna)
+    
     columna[tiene_k] <- as.character(as.numeric(gsub("K","", columna[tiene_k])) * 1000
     )
     as.numeric(columna)
   }
-muestra<- muestra %>%
+videojuegos<- videojuegos %>%
   mutate(
     Rating = convertir_a_numeric(Rating),
     Plays = convertir_a_numeric(Plays),
@@ -29,12 +35,12 @@ muestra<- muestra %>%
   )
 # Cambiamos la clase de "Release_Date" a date
 
-muestra$Release_Date[muestra$Release_Date == ""] <-NA
-muestra$Release_Date[muestra$Release_Date == "TBD"]<- NA
+videojuegos$Release_Date[videojuegos$Release_Date == ""] <-NA
+videojuegos$Release_Date[videojuegos$Release_Date == "TBD"]<- NA
 
 Sys.setlocale("LC_TIME","C")
-muestra$Release_Date <- as.Date(
-  muestra$Release_Date,
+videojuegos$Release_Date <- as.Date(
+  videojuegos$Release_Date,
   format = "%b %d, %Y"
   )
 
