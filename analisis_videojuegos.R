@@ -1,3 +1,6 @@
+#Cargamos libreria tidyverse
+library(tidyverse)
+
 # Cargamos la base de datos (backloggd_games)
 backloggd_games <-read.csv("backloggd_games.csv", sep=",")
 videojuegos <- backloggd_games
@@ -42,6 +45,33 @@ Sys.setlocale("LC_TIME","C")
 videojuegos$Release_Date <- as.Date(
   videojuegos$Release_Date,
   format = "%b %d, %Y"
-  )
+)
 
-                            
+#Verificamos si hay filas duplicadas
+sum(duplicated(videojuegos))
+
+#eliminamos las filas duplicadas
+videojuegos <- unique(videojuegos)
+
+#Chequeo de cuantos na hay en cada columna
+colSums(is.na(videojuegos))
+
+#Chequeo de listas vacia en columnas
+videojuegos %>% 
+  count(Developers, sort = TRUE)
+
+videojuegos %>% 
+  count(Platforms, sort = TRUE)
+
+videojuegos %>% 
+  count(Genres, sort = TRUE)
+
+#Funcion ya integrada de tidyverse, que convierte cualquier argumento que pongamos en na
+videojuegos <- videojuegos %>%
+  mutate(
+    Developers = na_if(Developers, "[]"),
+    Platforms = na_if(Platforms, "[]"),
+    Genres = na_if(Genres, "[]"),
+    Summary = na_if(Summary, "")
+    )
+
