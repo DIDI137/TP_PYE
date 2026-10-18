@@ -1,3 +1,9 @@
+# Cargar las librerias (si no estan descargadas usar install.packets)
+library(dplyr)   # install.packages("dplyr")
+library(tidyr)   # install.packages("tydyr")
+library(ggplot2) # install.packages("ggplot2")
+library(ggrepel) # install.packages("ggrepel")
+
 # Cargamos la base de datos (backloggd_games)
 backloggd_games <-read.csv("backloggd_games.csv", sep=",")
 videojuegos <- backloggd_games
@@ -7,8 +13,19 @@ str(videojuegos)
 sum(duplicated(videojuegos))
 unique(videojuegos$Rating)
 
-# Eliminamos la columna X
+# Eliminamos la columna X y Summary
 videojuegos <- videojuegos %>% select(-X)
+videojuegos <- videojuegos %>% select(-Summary)
+
+# Convertimos acamos los corchetes de las columnas Genrs y Plataforms
+videojuegos$Genres <- gsub("\\['", "", videojuegos$Genres)  # Elimina ['
+videojuegos$Genres <- gsub("\\']", "", videojuegos$Genres)  # Elimina ']
+videojuegos$Genres <- gsub("'", "", videojuegos$Genres)     # Elimina comillas simples restantes
+
+# Hacer lo mismo con Platforms
+videojuegos$Platforms <- gsub("\\['", "", videojuegos$Platforms)
+videojuegos$Platforms <- gsub("\\']", "", videojuegos$Platforms)
+videojuegos$Platforms <- gsub("'", "", videojuegos$Platforms)
 
 # Convertimos las filas de "character" a "numeric" con una funcion
 convertir_a_numeric <-
@@ -44,4 +61,42 @@ videojuegos$Release_Date <- as.Date(
   format = "%b %d, %Y"
   )
 
-                            
+# filtramos cuales son los mejores videojuegos, teniendo en cuenta el rating y cuantos juegadores lo juegan  
+datos <- filter(videojuegos, Rating >= 4.5 & Playing >= 500)
+
+# Ordenar por Rating (mayor a menor) y luego por Playing (mayor a menor)
+# Los primeros 10 son utilizados
+top10 <- datos %>%
+  arrange(desc(Rating), desc(Playing)) %>%
+  slice(1:10)
+
+print(top10)
+
+# Gráfico Scatter Plot con los 10
+ggplot(top10, aes(x = Playing, y = Rating, label = Title)) +
+  geom_point(size = 8, color = "steelblue", alpha = 0.7) +
+  geom_text_repel(aes(label = paste0(Title,"\n",
+                                      sprintf("%.1f", Rating))),
+    size = 4,
+    color = "black",
+    box.padding = 0.7,
+    segment.color = "gray"
+  ) +
+  labs(
+    title = "Top 10 Mejores Videojuegos",
+    subtitle = "Rating >= 4.5 y más de 500 jugadores",
+    x = "Rating",
+    y = "Jugadores Actuales (Playing)"
+  ) +
+  scale_y_continuous(
+    limits = c(1,5),breaks = seq(1,5, by=1),
+    labels = function(x) sub("\\.", ",", format(x,nsmall = 1))
+  )+
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
+
+
+
