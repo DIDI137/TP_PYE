@@ -72,7 +72,7 @@ top10 <- datos %>%
 
 print(top10)
 
-# Gráfico Scatter Plot con los 10
+# Grafico Scatter Plot con los 10
 ggplot(top10, aes(x = Playing, y = Rating, label = Title)) +
   geom_point(size = 8, color = "steelblue", alpha = 0.7) +
   geom_text_repel(aes(label = paste0(Title,"\n",
@@ -85,8 +85,8 @@ ggplot(top10, aes(x = Playing, y = Rating, label = Title)) +
   labs(
     title = "Top 10 Mejores Videojuegos",
     subtitle = "Rating >= 4.5 y más de 500 jugadores",
-    x = "Rating",
-    y = "Jugadores Actuales (Playing)"
+    x = "Jugadores Actuales (Playing)",
+    y = "Rating"
   ) +
   scale_y_continuous(
     limits = c(1,5),breaks = seq(1,5, by=1),
