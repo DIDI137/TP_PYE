@@ -146,6 +146,37 @@ barplot(top_platforms$n,
         main = "Top 10 Plataformas más frecuentes", 
         ylab = "Frecuencia",
         cex.names = 0.8)
+# ==========================================
+# ANÁLISIS DE GÉNEROS (Frecuencias y Porcentajes)
+# ==========================================
+
+# 1. Creamos la tabla de frecuencias y porcentajes para géneros
+tabla_genres <- videojuegos %>%
+  mutate(
+    Genres = gsub("[", "", Genres, fixed = TRUE),
+    Genres = gsub("]", "", Genres, fixed = TRUE),
+    Genres = gsub("'", "", Genres, fixed = TRUE)
+  ) %>%
+  separate_rows(Genres, sep = ", ") %>%     # Separa los géneros múltiples por la coma
+  mutate(Genres = trimws(Genres)) %>%       # Limpia espacios en blanco extras
+  count(Genres, sort = TRUE) %>%            # Cuenta frecuencias absolutas y ordena
+  mutate(
+    Porcentaje = round((n / sum(n)) * 100, 2) # Porcentaje redondeado a 2 decimales
+  )
+
+# Imprimimos la tabla completa en la consola
+#print(tabla_genres)
+
+# 2. Gráfico de barras para el Top 10 de géneros
+top_generos <- head(tabla_genres, 10)
+
+barplot(top_generos$n, 
+        names.arg = top_generos$Genres, 
+        las = 2,                          
+        col = "steelblue", 
+        main = "Top 10 Géneros más frecuentes", 
+        ylab = "Frecuencia",
+        cex.names = 0.8)                          
 
 #======================= Filtros y Orden =======================
 
@@ -186,49 +217,4 @@ ggplot(top10, aes(x = Playing, y = Rating, label = Title)) +
     plot.subtitle = element_text(hjust = 0.5)
   )
 
-#=================== Año de los 5 géneros con más juegos ===================
 
-# Elegimos los 5 géneros
-top_generos <- c("Adventure", "Indie", "RPG", "Simulator", "Strategy")
-
-lanz_gen <- videojuegos %>%
-  
-  mutate(anio = as.numeric(format(Release_Date, "%Y"))) %>% # Nos quedamos con el año
-  
-  filter(!is.na(anio), anio >= 2000, anio <= 2023) %>% # Sacamos los NA y nos quedamos con 2000-2023
-  
-  separate_rows(Genres, sep = ", ") %>% # Separamos cada género en su propia fila
-  
-  filter(Genres %in% top_generos) %>%
-  
-  count(anio, Genres)
-
-
-#============== Gráfico de lanzamientos por año según el género ==============
-
-# gráfico de líneas múltiples
-
-colores <- c(
-  "Adventure" = "#FF8FA3",  
-  "Indie"     = "#5CC8E0",  
-  "RPG"       = "#A58CFF",  
-  "Simulator" = "#FFC857",  
-  "Strategy"  = "#6FD6A5"   
-)
-ggplot(lanz_gen, aes(x = anio, y = n, color = Genres)) +
-  geom_line(linewidth = 1) +
-  scale_color_manual(values = colores) +  # acá se aplican los colores
-  labs(
-    title = "Lanzamientos por año según género",
-    subtitle = "Top 5 géneros más frecuentes, 2000-2023",
-    x = "Año",
-    y = "Cantidad de juegos",
-    color = "Género"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5)
-  )
-
-#=======================================================================
