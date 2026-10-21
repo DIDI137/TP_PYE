@@ -103,49 +103,11 @@ min(videojuegos$Rating, na.rm = TRUE)     # Mínimo
 max(videojuegos$Rating, na.rm = TRUE)     # Máximo
 
 # 2. Gráficos simples
-boxplot(videojuegos$Rating, 
-        main = "Diagrama de Caja de Calificaciones", 
-        ylab = "Rating", 
-        col = "lightgreen",
-        horizontal = TRUE)
-
-#======================= Análisis descriptivo: Plays =======================
-
-# Contamos cuántos registros no válidos se descartan (ceros, negativos o NA)
-sum(videojuegos$Plays <= 0, na.rm = TRUE)     # Cantidad de juegos con 0 jugadas o menos
-
-# Creamos el vector limpio (sin ceros, negativos ni NA)
-plays_limpios <- videojuegos$Plays[videojuegos$Plays > 0]
-
-# 1. Medidas de posición sobre los datos limpios
-mean(plays_limpios)     # Media
-median(plays_limpios)   # Mediana
-quantile(plays_limpios, probs = c(0.25, 0.5, 0.75, 0.95)) # Cuartiles
-
-# Minimos y Maximos limpios
-min(plays_limpios)    # Mínimo
-max(plays_limpios)    # Máximo
-
-# 2. Medidas de dispersión sobre los datos limpios
-sd(plays_limpios)       # Desvío estándar
-IQR(plays_limpios)      # Rango intercuartílico
-
-# 3. Gráficos utilizando el mismo vector limpio
-hist(plays_limpios, 
-     main = "Distribución de la Cantidad de Jugadores (Plays)", 
-     xlab = "Cantidad de Jugadores", 
+hist(videojuegos$Rating, 
+     main = "Distribución de Calificaciones (Rating)", 
+     xlab = "Calificación", 
      ylab = "Frecuencia",
-     col = "orange", 
-     border = "white",
-     breaks = 30)
-
-boxplot(plays_limpios, 
-        main = "Diagrama de Caja - Cantidad de veces que lo jugaron", 
-        xlab = "Cantidad de Jugadores", 
-        col = "tomato",
-        horizontal = TRUE,
-        outline = TRUE)
-
+     col = "skyblue")
 
 #======================= Filtros y Orden =======================
 
@@ -233,3 +195,34 @@ ggplot(lanz_gen, aes(x = anio, y = n, color = Genres)) +
   )
 
 #=======================================================================
+# ANÁLISIS DE PLATAFORMAS (Frecuencias y Porcentajes)
+# ==========================================
+
+# 1. Creamos la tabla de frecuencias y porcentajes para plataformas
+tabla_platforms <- videojuegos %>%
+  mutate(
+    Platforms = gsub("[", "", Platforms, fixed = TRUE),
+    Platforms = gsub("]", "", Platforms, fixed = TRUE),
+    Platforms = gsub("'", "", Platforms, fixed = TRUE)
+  ) %>%
+  separate_rows(Platforms, sep = ", ") %>%   # Separamos plataformas múltiples
+  mutate(Platforms = trimws(Platforms)) %>%  # Limpiamos espacios extra
+  count(Platforms, sort = TRUE) %>%          # Frecuencia absoluta (n)
+  mutate(
+    Porcentaje = round((n / sum(n)) * 100, 2) # Porcentaje redondeado a 2 decimales
+  )
+
+# Imprimimos la tabla completa en la consola
+#print(tabla_platforms)
+
+# 2. Gráfico de barras para el Top 10 de plataformas
+top_platforms <- head(tabla_platforms, 10)
+
+barplot(top_platforms$n, 
+        names.arg = top_platforms$Platforms, 
+        las = 2, 
+        col = "forestgreen", 
+        main = "Top 10 Plataformas más frecuentes", 
+        ylab = "Frecuencia",
+        cex.names = 0.8)
+
