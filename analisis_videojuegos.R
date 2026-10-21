@@ -109,6 +109,44 @@ hist(videojuegos$Rating,
      ylab = "Frecuencia",
      col = "skyblue")
 
+boxplot(videojuegos$Rating, 
+        main = "Diagrama de Caja de Calificaciones", 
+        ylab = "Rating", 
+        col = "lightgreen",
+        horizontal = TRUE)
+
+# ==========================================
+# ANÁLISIS DE PLATAFORMAS (Frecuencias y Porcentajes)
+# ==========================================
+
+# 1. Creamos la tabla de frecuencias y porcentajes para plataformas
+tabla_platforms <- videojuegos %>%
+  mutate(
+    Platforms = gsub("[", "", Platforms, fixed = TRUE),
+    Platforms = gsub("]", "", Platforms, fixed = TRUE),
+    Platforms = gsub("'", "", Platforms, fixed = TRUE)
+  ) %>%
+  separate_rows(Platforms, sep = ", ") %>%   # Separamos plataformas múltiples
+  mutate(Platforms = trimws(Platforms)) %>%  # Limpiamos espacios extra
+  count(Platforms, sort = TRUE) %>%          # Frecuencia absoluta (n)
+  mutate(
+    Porcentaje = round((n / sum(n)) * 100, 2) # Porcentaje redondeado a 2 decimales
+  )
+
+# Imprimimos la tabla completa en la consola
+#print(tabla_platforms)
+
+# 2. Gráfico de barras para el Top 10 de plataformas
+top_platforms <- head(tabla_platforms, 10)
+
+barplot(top_platforms$n, 
+        names.arg = top_platforms$Platforms, 
+        las = 2, 
+        col = "forestgreen", 
+        main = "Top 10 Plataformas más frecuentes", 
+        ylab = "Frecuencia",
+        cex.names = 0.8)
+
 #======================= Filtros y Orden =======================
 
 # filtramos cuales son los mejores juegos, teniendo en cuenta el rating y cuantos juegadores lo juegan  
@@ -121,7 +159,6 @@ top10 <- datos %>%
   slice(1:10)
 
 print(top10)
-
 #=============== Gráfico Scatter Plot con los 10 mejores ===============
 
 ggplot(top10, aes(x = Playing, y = Rating, label = Title)) +
@@ -195,34 +232,3 @@ ggplot(lanz_gen, aes(x = anio, y = n, color = Genres)) +
   )
 
 #=======================================================================
-# ANÁLISIS DE PLATAFORMAS (Frecuencias y Porcentajes)
-# ==========================================
-
-# 1. Creamos la tabla de frecuencias y porcentajes para plataformas
-tabla_platforms <- videojuegos %>%
-  mutate(
-    Platforms = gsub("[", "", Platforms, fixed = TRUE),
-    Platforms = gsub("]", "", Platforms, fixed = TRUE),
-    Platforms = gsub("'", "", Platforms, fixed = TRUE)
-  ) %>%
-  separate_rows(Platforms, sep = ", ") %>%   # Separamos plataformas múltiples
-  mutate(Platforms = trimws(Platforms)) %>%  # Limpiamos espacios extra
-  count(Platforms, sort = TRUE) %>%          # Frecuencia absoluta (n)
-  mutate(
-    Porcentaje = round((n / sum(n)) * 100, 2) # Porcentaje redondeado a 2 decimales
-  )
-
-# Imprimimos la tabla completa en la consola
-#print(tabla_platforms)
-
-# 2. Gráfico de barras para el Top 10 de plataformas
-top_platforms <- head(tabla_platforms, 10)
-
-barplot(top_platforms$n, 
-        names.arg = top_platforms$Platforms, 
-        las = 2, 
-        col = "forestgreen", 
-        main = "Top 10 Plataformas más frecuentes", 
-        ylab = "Frecuencia",
-        cex.names = 0.8)
-
