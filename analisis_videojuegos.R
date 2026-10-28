@@ -1,8 +1,16 @@
-#Cargamos libreria tidyverse
-library(tidyverse)
+# ==========================================================================
+# Trabajo Práctico - Probabilidad y Estadística 2026
+# Pregunta: ¿Qué combinaciones de género y plataforma tienen mayor consumo
+# (Playing) y mejor valoración (Rating) de los videojuegos?
+# ==========================================================================
 
+# Cargar las librerias
+library(dplyr)   # install.packages("dplyr")
+library(tidyr)   # install.packages("tidyr")
+
+# ======================= Carga de datos =======================
 # Cargamos la base de datos (backloggd_games)
-backloggd_games <-read.csv("backloggd_games.csv", sep=",")
+backloggd_games <- read.csv("backloggd_games.csv", sep = ",")
 videojuegos <- backloggd_games
 
 # Chequeo
@@ -10,195 +18,247 @@ str(videojuegos)
 sum(duplicated(videojuegos))
 unique(videojuegos$Rating)
 
-# Eliminamos la columna X
+# Eliminamos la columna X y Summary
 videojuegos <- videojuegos %>% select(-X)
+videojuegos <- videojuegos %>% select(-Summary)
 
-# Convertimos las filas de "character" a "numeric" con una funcion
-convertir_a_numeric <-
-  function(columna) {
-    columna <- as.character(columna)
-    columna <- trimws(columna)
-    columns <- toupper(columna)
-    
-    tiene_k <- grepl("K", columna)
-    
-    columna[tiene_k] <- as.character(as.numeric(gsub("K","", columna[tiene_k])) * 1000
-    )
-    as.numeric(columna)
-  }
-videojuegos<- videojuegos %>%
-  mutate(
-    Rating = convertir_a_numeric(Rating),
-    Plays = convertir_a_numeric(Plays),
-    Playing = convertir_a_numeric(Playing),
-    Backlogs = convertir_a_numeric(Backlogs),
-    Wishlist = convertir_a_numeric(Wishlist),
-    Lists = convertir_a_numeric(Lists),
-    Reviews = convertir_a_numeric(Reviews)
-  )
-# Cambiamos la clase de "Release_Date" a date
+# ======================= Limpieza =======================
 
-videojuegos$Release_Date[videojuegos$Release_Date == ""] <-NA
-videojuegos$Release_Date[videojuegos$Release_Date == "TBD"]<- NA
+# Sacamos los corchetes y comillas de Genres y Platforms
+# (vienen como "['Adventure', 'RPG']" y los dejamos como "Adventure, RPG")
+videojuegos$Genres <- gsub("\\['", "", videojuegos$Genres)
+videojuegos$Genres <- gsub("\\']", "", videojuegos$Genres)
+videojuegos$Genres <- gsub("'", "", videojuegos$Genres)
 
-Sys.setlocale("LC_TIME","C")
-videojuegos$Release_Date <- as.Date(
-  videojuegos$Release_Date,
-  format = "%b %d, %Y"
-)
+videojuegos$Platforms <- gsub("\\['", "", videojuegos$Platforms)
+videojuegos$Platforms <- gsub("\\']", "", videojuegos$Platforms)
+videojuegos$Platforms <- gsub("'", "", videojuegos$Platforms)
 
-#Verificamos si hay filas duplicadas
-sum(duplicated(videojuegos))
+# Funcion que pasa de texto a numero. Los valores como "4.1K" significan
+# 4100, entonces sacamos la K y multiplicamos por 1000
+convertir_a_numeric <- function(columna) {
+  columna <- as.character(columna)
+  columna <- trimws(columna)
+  columna <- toupper(columna)
+  
+  tiene_k <- grepl("K", columna)
+  columna[tiene_k] <- as.character(as.numeric(gsub("K", "", columna[tiene_k])) * 1000)
+  as.numeric(columna)
+}
 
-#eliminamos las filas duplicadas
-videojuegos <- unique(videojuegos)
-
-#Chequeo de cuantos na hay en cada columna
-colSums(is.na(videojuegos))
-
-#Chequeo de listas vacia en columnas
-videojuegos %>% 
-  count(Developers, sort = TRUE)
-
-videojuegos %>% 
-  count(Platforms, sort = TRUE)
-
-videojuegos %>% 
-  count(Genres, sort = TRUE)
-
-#Funcion ya integrada de tidyverse, que convierte cualquier argumento que pongamos en na
+# Solo convertimos las variables que usa el analisis
 videojuegos <- videojuegos %>%
   mutate(
-    Developers = na_if(Developers, "[]"),
-    Platforms = na_if(Platforms, "[]"),
-    Genres = na_if(Genres, "[]"),
-    Summary = na_if(Summary, "")
-    )
+    Rating  = convertir_a_numeric(Rating),
+    Playing = convertir_a_numeric(Playing)
+  )
 
-#Analisis descriptivo de las variables: Rating (Cuantitativa)
+# ======================= Duplicados y NA =======================
+
+# Verificamos y eliminamos filas duplicadas
+sum(duplicated(videojuegos))
+videojuegos <- unique(videojuegos)
+
+# Cuantos NA hay en cada columna
+colSums(is.na(videojuegos))
+
+# Chequeo de listas vacias
+videojuegos %>% count(Platforms, sort = TRUE)
+videojuegos %>% count(Genres, sort = TRUE)
+
+# Las listas vacias "[]" pasan a ser NA
+# (despues hay que sacarlos antes de contar categorias)
+videojuegos <- videojuegos %>%
+  mutate(
+    Platforms = na_if(Platforms, "[]"),
+    Genres    = na_if(Genres, "[]")
+  )
+
+# Datos para el informe (cuantos registros hay en cada variable)
+nrow(videojuegos)                    # total de videojuegos (muestra)
+sum(!is.na(videojuegos$Rating))      # juegos CON Rating
+sum(is.na(videojuegos$Rating))       # juegos SIN Rating
+sum(is.na(videojuegos$Platforms))    # juegos sin plataforma
+sum(is.na(videojuegos$Genres))       # juegos sin genero
+sum(videojuegos$Playing < 0, na.rm = TRUE)   # registros invalidos de Playing (-1)
+
+# ======================= Análisis descriptivo: Rating =======================
 
 # 1. Medidas de tendencia central y dispersión
 mean(videojuegos$Rating, na.rm = TRUE)    # Media
 median(videojuegos$Rating, na.rm = TRUE)  # Mediana
 sd(videojuegos$Rating, na.rm = TRUE)      # Desvío estándar
 IQR(videojuegos$Rating, na.rm = TRUE)     # Rango intercuartílico
-
-#--Minimos y Maximos, para ver los valores extremo
-min(videojuegos$Rating, na.rm = TRUE)     # Minimo
+min(videojuegos$Rating, na.rm = TRUE)     # Mínimo
 max(videojuegos$Rating, na.rm = TRUE)     # Máximo
+summary(videojuegos$Rating)               # Incluye Q1 y Q3
 
-# 2. Gráficos simples
-hist(videojuegos$Rating, 
-     main = "Distribución de Calificaciones (Rating)", 
-     xlab = "Calificación", 
+# 2. Gráficos
+# --- Histograma de Rating ---
+colores <- colorRampPalette(c("#10002B", "#7B2CBF", "#E0AAFF"))(10)
+
+hist(videojuegos$Rating,
+     main = "Distribución de Calificaciones (Rating)",
+     xlab = "Calificación",
      ylab = "Frecuencia",
-     col = "skyblue")
+     breaks = seq(0, 5, by = 0.5),   # 10 barras: una por cada tono
+     col = colores,
+     border = "white")
 
-boxplot(videojuegos$Rating, 
-        main = "Diagrama de Caja de Calificaciones", 
-        ylab = "Rating", 
-        col = "lightgreen",
+# --- Boxplot de Rating ---
+boxplot(videojuegos$Rating,
+        main = "Diagrama de Caja de Calificaciones",
+        xlab = "Rating",
+        col = colores[6],       # relleno de la caja
+        border = colores[1],    # contorno y lineas
         horizontal = TRUE)
 
-#Analisis descriptivo de las variables: Plays (Cuantitativa)
+# ======================= Análisis descriptivo: Playing =======================
+# 1. Medidas de tendencia central y dispersión
+mean(videojuegos$Playing, na.rm = TRUE)    # Media
+median(videojuegos$Playing, na.rm = TRUE)  # Mediana
+sd(videojuegos$Playing, na.rm = TRUE)      # Desvío estándar
+IQR(videojuegos$Playing, na.rm = TRUE)     # Rango intercuartílico
+min(videojuegos$Playing, na.rm = TRUE)     # Mínimo
+max(videojuegos$Playing, na.rm = TRUE)     # Máximo
+summary(videojuegos$Playing)               # Incluye Q1 y Q3
 
-# 0. Contar y mostrar cuántos registros no válidos (ceros, negativos o NA) se descartaron
-sum(videojuegos$Plays <= 0, na.rm = TRUE)     # Cantidad de juegos con 0 jugadas o menos
+# Hay 5 registros con Playing = -1 (dato invalido), los dejamos afuera
+playing_valido <- videojuegos$Playing[!is.na(videojuegos$Playing) &
+                                        videojuegos$Playing >= 0]
 
-# Creamos el vector limpio (sin ceros, negativos ni NA)
-plays_limpios <- videojuegos$Plays[videojuegos$Plays > 0]
+summary(playing_valido)       # la mediana es 0: casi nadie esta jugando ahora
+sd(playing_valido)            # desvío estándar
+mean(playing_valido == 0)     # proporcion de juegos con 0 jugadores actuales
 
-# 1. Medidas de posición sobre los datos limpios
-mean(plays_limpios)     # Media
-median(plays_limpios)   # Mediana
-quantile(plays_limpios, probs = c(0.25, 0.5, 0.75, 0.95)) # Cuartiles
+# Casi todos tienen 0 o 1 jugador, entonces un histograma comun se ve
+# como una sola barra. Agrupamos en categorias:
+grupos_playing <- cut(playing_valido,
+                      breaks = c(-Inf, 0, 9, 99, Inf),
+                      labels = c("0", "1 a 9", "10 a 99", "100 o más"))
 
-# Minimos y Maximos limpios
-min(plays_limpios)    # Mínimo
-max(plays_limpios)    # Máximo
+# Guardamos la tabla en 'tabla_playing'
+tabla_playing <- table(grupos_playing)          # cantidad de juegos en cada grupo
 
-# 2. Medidas de dispersión sobre los datos limpios
-sd(plays_limpios)       # Desvío estándar
-IQR(plays_limpios)      # Rango intercuartílico
+# --- Gráfico de Torta de Playing ---
+colores <- c("#FFA1C2", "#FFF3B2", "#8FB3E8", "#2E5AA7")
 
-# 3. Gráficos utilizando el mismo vector limpio
-hist(plays_limpios, 
-     main = "Distribución de la Cantidad de Jugadores (Plays)", 
-     xlab = "Cantidad de Jugadores", 
-     ylab = "Frecuencia",
-     col = "orange", 
-     border = "white",
-     breaks = 30)
+# Calcular porcentajes para las etiquetas del gráfico de torta
+porcentajes_playing <- round(tabla_playing / sum(tabla_playing) * 100, 1)
+etiquetas_playing <- paste0(names(tabla_playing), " (", porcentajes_playing, "%)")
 
-boxplot(plays_limpios, 
-        main = "Diagrama de Caja - Cantidad de veces que lo jugaron", 
-        xlab = "Cantidad de Jugadores", 
-        col = "tomato",
-        horizontal = TRUE,
-        outline = TRUE)
+# Ajustar márgenes para el gráfico circular
+par(mar = c(2, 2, 4, 2))
 
-# ==========================================
-# ANÁLISIS DE GÉNEROS (Frecuencias y Porcentajes)
-# ==========================================
-
-# 1. Creamos la tabla de frecuencias y porcentajes para géneros
-tabla_genres <- videojuegos %>%
-  mutate(
-    Genres = gsub("[", "", Genres, fixed = TRUE),
-    Genres = gsub("]", "", Genres, fixed = TRUE),
-    Genres = gsub("'", "", Genres, fixed = TRUE)
-  ) %>%
-  separate_rows(Genres, sep = ", ") %>%     # Separa los géneros múltiples por la coma
-  mutate(Genres = trimws(Genres)) %>%       # Limpia espacios en blanco extras
-  count(Genres, sort = TRUE) %>%            # Cuenta frecuencias absolutas y ordena
-  mutate(
-    Porcentaje = round((n / sum(n)) * 100, 2) # Porcentaje redondeado a 2 decimales
-  )
-
-# Imprimimos la tabla completa en la consola
-#print(tabla_genres)
-
-# 2. Gráfico de barras para el Top 10 de géneros
-top_generos <- head(tabla_genres, 10)
-
-barplot(top_generos$n, 
-        names.arg = top_generos$Genres, 
-        las = 2,                          
-        col = "steelblue", 
-        main = "Top 10 Géneros más frecuentes", 
-        ylab = "Frecuencia",
-        cex.names = 0.8)                          
-
+pie(tabla_playing,
+    labels = etiquetas_playing,
+    main = "Jugadores actuales por videojuego (Playing)",
+    col = colores,
+    border = "black",
+    cex = 0.9)
 
 # ==========================================
 # ANÁLISIS DE PLATAFORMAS (Frecuencias y Porcentajes)
 # ==========================================
 
-# 1. Creamos la tabla de frecuencias y porcentajes para plataformas
+# 1. Tabla de frecuencias y porcentajes
 tabla_platforms <- videojuegos %>%
-  mutate(
-    Platforms = gsub("[", "", Platforms, fixed = TRUE),
-    Platforms = gsub("]", "", Platforms, fixed = TRUE),
-    Platforms = gsub("'", "", Platforms, fixed = TRUE)
-  ) %>%
-  separate_rows(Platforms, sep = ", ") %>%   # Separamos plataformas múltiples
-  mutate(Platforms = trimws(Platforms)) %>%  # Limpiamos espacios extra
-  count(Platforms, sort = TRUE) %>%          # Frecuencia absoluta (n)
-  mutate(
-    Porcentaje = round((n / sum(n)) * 100, 2) # Porcentaje redondeado a 2 decimales
-  )
+  separate_rows(Platforms, sep = ", ") %>%    # una fila por cada plataforma
+  mutate(Platforms = trimws(Platforms)) %>%
+  filter(!is.na(Platforms)) %>%               # saca los NA (juegos sin plataforma)
+  count(Platforms, sort = TRUE) %>%           # Frecuencia absoluta (n)
+  mutate(Porcentaje = round((n / sum(n)) * 100, 2))
 
-# Imprimimos la tabla completa en la consola
-#print(tabla_platforms)
+head(tabla_platforms, 5)      # frecuencias y % del informe
+nrow(tabla_platforms)         # cantidad de plataformas distintas
 
-# 2. Gráfico de barras para el Top 10 de plataformas
+# 2. Gráfico de barras Top 10
 top_platforms <- head(tabla_platforms, 10)
 
-barplot(top_platforms$n, 
-        names.arg = top_platforms$Platforms, 
-        las = 2, 
-        col = "forestgreen", 
-        main = "Top 10 Plataformas más frecuentes", 
+colores <- c("#03045E", "#023E8A", "#0077B6", "#0096C7", "#00B4D8",
+             "#48CAE4", "#90E0EF", "#ADE8F4", "#CAF0F8", "#E0F4FA")
+
+# mas margen abajo (primer numero de mar) para que no se corten los nombres
+par(mar = c(7, 5, 4, 2))
+
+barplot(top_platforms$n,
+        names.arg = top_platforms$Platforms,
+        las = 2,
+        main = "Top 10 Plataformas más frecuentes",
         ylab = "Frecuencia",
-        cex.names = 0.8)# Cambio de prueba
+        cex.names = 0.8,
+        col = colores,
+        border = colores[1])   # contorno oscuro para que se vean las barras claras
+
+# ==========================================
+# ANÁLISIS DE GÉNEROS (Frecuencias y Porcentajes)
+# ==========================================
+
+# 1. Tabla de frecuencias y porcentajes
+tabla_genres <- videojuegos %>%
+  separate_rows(Genres, sep = ", ") %>%       # una fila por cada género
+  mutate(Genres = trimws(Genres)) %>%
+  filter(!is.na(Genres)) %>%                  # saca los NA (juegos sin género)
+  count(Genres, sort = TRUE) %>%
+  mutate(Porcentaje = round((n / sum(n)) * 100, 2))
+
+head(tabla_genres, 5)         # frecuencias y % del informe
+nrow(tabla_genres)            # cantidad de géneros distintos
+
+# 2. Gráfico de barras Top 10
+top_generos <- head(tabla_genres, 10)
+
+colores <- colorRampPalette(c("#081C15", "#40916C", "#B7E4C7"))(10)
+
+barplot(top_generos$n,
+        names.arg = top_generos$Genres,
+        las = 2,
+        main = "Top 10 Géneros más frecuentes",
+        ylab = "Frecuencia",
+        cex.names = 0.8,
+        col = colores,
+        border = colores[1])
+
+par(mar = c(5, 4, 4, 2) + 0.1)   # volvemos al margen normal
+
+# ======================= Género x Plataforma =======================
+# Pregunta: ¿Qué combinaciones de género y plataforma tienen
+# mayor consumo (Playing) y mejor valoración (Rating)?
+
+# 1. Tabla cruzada (top 5 géneros x top 5 plataformas)
+cruce <- videojuegos %>%
+  separate_rows(Genres, sep = ", ") %>%
+  separate_rows(Platforms, sep = ", ") %>%
+  filter(Genres %in% top_generos$Genres[1:5],
+         Platforms %in% top_platforms$Platforms[1:5],
+         !is.na(Rating),
+         !is.na(Playing), Playing >= 0) %>%   # saca los registros con Playing = -1
+  group_by(Genres, Platforms) %>%
+  summarise(n = n(),
+            rating_prom  = mean(Rating),
+            playing_prom = mean(Playing),
+            .groups = "drop") %>%
+  filter(n >= 30)   # evita promedios de pocos juegos
+
+# 2. Top 5 combinaciones (para las conclusiones)
+cruce %>% arrange(desc(rating_prom))  %>% slice(1:5)   # mejor valoradas
+cruce %>% arrange(desc(playing_prom)) %>% slice(1:5)   # más consumidas
+
+# 3. Matriz para barplot (filas = plataformas, columnas = géneros)
+m_playing <- xtabs(playing_prom ~ Platforms + Genres, data = cruce)
+
+# --- Gráfico: Playing promedio (consumo) ---
+colores <- c("#440154", "#3B528B", "#21908C", "#5DC863", "#FDE725")
+
+barplot(m_playing,
+        beside = TRUE,
+        las = 2,
+        col = colores,
+        border = "white",
+        ylim = c(0, max(m_playing) * 1.3),   # espacio para la leyenda
+        legend.text = rownames(m_playing),
+        args.legend = list(x = "topright", cex = 0.7),
+        main = "Jugadores actuales promedio por género y plataforma",
+        ylab = "Playing promedio",
+        cex.names = 0.8)
 
