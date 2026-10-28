@@ -200,4 +200,4 @@ barplot(top_platforms$n,
         col = "forestgreen", 
         main = "Top 10 Plataformas más frecuentes", 
         ylab = "Frecuencia",
-        cex.names = 0.8)
+        cex.names = 0.8)# Cambio de prueba
