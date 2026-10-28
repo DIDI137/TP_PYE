@@ -201,3 +201,4 @@ barplot(top_platforms$n,
         main = "Top 10 Plataformas más frecuentes", 
         ylab = "Frecuencia",
         cex.names = 0.8)# Cambio de prueba
+
