@@ -114,18 +114,17 @@ boxplot(videojuegos$Rating,
         horizontal = TRUE)
 
 # ======================= Análisis descriptivo: Playing =======================
-# 1. Medidas de tendencia central y dispersión
-mean(videojuegos$Playing, na.rm = TRUE)    # Media
-median(videojuegos$Playing, na.rm = TRUE)  # Mediana
-sd(videojuegos$Playing, na.rm = TRUE)      # Desvío estándar
-IQR(videojuegos$Playing, na.rm = TRUE)     # Rango intercuartílico
-min(videojuegos$Playing, na.rm = TRUE)     # Mínimo
-max(videojuegos$Playing, na.rm = TRUE)     # Máximo
-summary(videojuegos$Playing)               # Incluye Q1 y Q3
-
 # Hay 5 registros con Playing = -1 (dato invalido), los dejamos afuera
-playing_valido <- videojuegos$Playing[!is.na(videojuegos$Playing) &
-                                        videojuegos$Playing >= 0]
+playing_valido <- videojuegos$Playing[!is.na(videojuegos$Playing) & videojuegos$Playing >= 0]
+
+# 1. Medidas de tendencia central y dispersión
+mean(playing_valido)      # Media
+median(playing_valido)    # Mediana
+sd(playing_valido)        # Desvío estándar
+IQR(playing_valido)       # Rango intercuartílico
+min(playing_valido)       # Mínimo
+max(playing_valido)       # Máximo
+
 
 summary(playing_valido)       # la mediana es 0: casi nadie esta jugando ahora
 sd(playing_valido)            # desvío estándar
@@ -261,3 +260,4 @@ barplot(m_playing,
         main = "Jugadores actuales promedio por género y plataforma",
         ylab = "Playing promedio",
         cex.names = 0.8)
+
