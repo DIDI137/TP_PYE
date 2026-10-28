@@ -137,17 +137,25 @@ grupos_playing <- cut(playing_valido,
                       breaks = c(-Inf, 0, 9, 99, Inf),
                       labels = c("0", "1 a 9", "10 a 99", "100 o más"))
 
-table(grupos_playing)         # cantidad de juegos en cada grupo
+# Guardamos la tabla en 'tabla_playing'
+tabla_playing <- table(grupos_playing)          # cantidad de juegos en cada grupo
 
-# --- Barras de Playing ---
+# --- Gráfico de Torta de Playing ---
 colores <- c("#FFA1C2", "#FFF3B2", "#8FB3E8", "#2E5AA7")
 
-barplot(table(grupos_playing),
-        main = "Jugadores actuales por videojuego (Playing)",
-        xlab = "Cantidad de jugadores actuales",
-        ylab = "Cantidad de videojuegos",
-        col = colores,
-        border = "black")
+# Calcular porcentajes para las etiquetas del gráfico de torta
+porcentajes_playing <- round(tabla_playing / sum(tabla_playing) * 100, 1)
+etiquetas_playing <- paste0(names(tabla_playing), " (", porcentajes_playing, "%)")
+
+# Ajustar márgenes para el gráfico circular
+par(mar = c(2, 2, 4, 2))
+
+pie(tabla_playing,
+    labels = etiquetas_playing,
+    main = "Jugadores actuales por videojuego (Playing)",
+    col = colores,
+    border = "black",
+    cex = 0.9)
 
 # ==========================================
 # ANÁLISIS DE PLATAFORMAS (Frecuencias y Porcentajes)
