@@ -261,4 +261,3 @@ barplot(m_playing,
         main = "Jugadores actuales promedio por género y plataforma",
         ylab = "Playing promedio",
         cex.names = 0.8)
-
