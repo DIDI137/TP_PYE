@@ -261,7 +261,24 @@ barplot(m_playing,
         cex.names = 0.8)
 
 #------------- Promedio Rating (Género x Plataforma) ------------
-cruce %>%
+top10_rating <- cruce %>%
   arrange(desc(rating_prom)) %>%
-  select(Genres, Platforms, rating_prom) %>%
   head(10)
+
+ggplot(top10_rating, aes(
+  x = reorder(paste(Genres, Platforms, sep = " - "), rating_prom),
+  y = rating_prom,
+  color = Genres
+)) +
+  geom_point(size = 4) +
+  scale_color_brewer(palette = "Set1") +
+  labs(
+    title = "Top 10 combinaciones con mejor Rating promedio",
+    x = "Combinación de género y plataforma",
+    y = "Rating promedio",
+    color = "Género"
+  ) +
+  coord_flip() +
+  ylim(3, 3.5) +
+  theme_minimal()
+
