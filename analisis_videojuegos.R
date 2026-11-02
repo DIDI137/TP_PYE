@@ -1,6 +1,6 @@
 # ==========================================================================
 # Trabajo Práctico - Probabilidad y Estadística 2026
-# Pregunta: ¿Qué combinaciones de género y plataforma tienen mayor consumo
+# Pregunta: ¿Qué combinacion de género y plataforma tienen mayor consumo
 # (Playing) y mejor valoración (Rating) de los videojuegos?
 # ==========================================================================
 
@@ -54,7 +54,6 @@ videojuegos <- videojuegos %>%
   )
 
 # ======================= Duplicados y NA =======================
-
 # Verificamos y eliminamos filas duplicadas
 sum(duplicated(videojuegos))
 videojuegos <- unique(videojuegos)
@@ -221,7 +220,7 @@ barplot(top_generos$n,
 par(mar = c(5, 4, 4, 2) + 0.1)   # volvemos al margen normal
 
 # ======================= Género x Plataforma =======================
-# Pregunta: ¿Qué combinaciones de género y plataforma tienen
+# Pregunta: ¿Qué combinacion de género y plataforma tienen
 # mayor consumo (Playing) y mejor valoración (Rating)?
 
 # 1. Tabla cruzada (top 5 géneros x top 5 plataformas)
@@ -261,3 +260,8 @@ barplot(m_playing,
         ylab = "Playing promedio",
         cex.names = 0.8)
 
+#------------- Promedio Rating (Género x Plataforma) ------------
+cruce %>%
+  arrange(desc(rating_prom)) %>%
+  select(Genres, Platforms, rating_prom) %>%
+  head(10)
